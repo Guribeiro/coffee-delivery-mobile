@@ -1,20 +1,29 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { Routes } from './src/routes';
+import {Baloo2_800ExtraBold} from '@expo-google-fonts/baloo-2'
+import {Roboto_400Regular, Roboto_700Bold} from '@expo-google-fonts/roboto'
+import {GluestackUIProvider} from '@gluestack-ui/themed'
+import {config} from '@config/gluestack-ui.config'
+ 
+SplashScreen.preventAutoHideAsync();
 
 export default function App() {
+  const [loaded] = useFonts({
+    Baloo2_800ExtraBold, 
+    Roboto_400Regular, 
+    Roboto_700Bold
+  })
+
+  if(loaded) {
+    SplashScreen.hideAsync();
+  }
+
+  if(!loaded) return
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <GluestackUIProvider config={config}>
+      <Routes />
+    </GluestackUIProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
