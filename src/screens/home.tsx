@@ -1,4 +1,4 @@
-import { FlatList, SectionList } from 'react-native'
+import { FlatList, Pressable, SectionList } from 'react-native'
 import {
   Text, 
   VStack, 
@@ -7,9 +7,14 @@ import {
   Image
 } from '@gluestack-ui/themed'
 import Animated, { 
-  SlideInRight,
-  ZoomIn,
-  SlideInDown
+  SlideInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  useAnimatedScrollHandler,
+  interpolateColor,
+  FadeIn,
+  FadeOut
 } from 'react-native-reanimated'
 
 import { config } from '@config/gluestack-ui.config'
@@ -17,16 +22,19 @@ import { config } from '@config/gluestack-ui.config'
 import { Input } from '@components/input'
 import { CoffeeCard } from '@components/coffee-card'
 import { HomeHeader } from '@components/home-header'
-import { CoffeeHighlightCard } from '@components/coffee-highlight-card'
+import { CoffeeHighlightsList } from '@components/coffee-highlights-list'
 
 import { COFFEES } from '@data/coffees'
 import { COFFEES_TYPE, CoffeeType } from '@data/coffees-type'
-import { COFFEES_HIGHTLIGHT } from '@data/coffee-highlights'
+
 
 import CoffeeBeans from "@assets/coffeebeans.png";
 import { useRef, useState } from 'react'
 
 import { FilterButton } from '@components/filter-button'
+import { CoffeeBackgroundLayer } from '@components/coffee-background-layer'
+import { useNavigation } from '@react-navigation/native'
+import { AppNavigatorRouteProps } from '@routes/app.routes'
 
 const ITEM_HEIGHT = 200;
 const HEADER_HEIGHT = 520;
@@ -37,8 +45,36 @@ export const Home = () => {
   const {colors} = config.tokens
   const flatListRef = useRef<FlatList>(null);
 
+  const {navigate} = useNavigation<AppNavigatorRouteProps>()
+
   const [selectedCoffeeType, setSelectedCoffeeType] = useState<CoffeeType>()
 
+  const contentOpacity = useSharedValue(0)
+
+  const scrollY = useSharedValue(0)
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y
+    },
+  });
+
+  const homeHeaderContainerStyles = useAnimatedStyle(() => {
+    return {
+      backgroundColor: interpolateColor(
+        scrollY.value,
+        [525, 530],
+        [colors.gray100, colors.gray900]
+      ),
+      borderBottomWidth: 1,
+      borderBottomColor: interpolateColor(
+        scrollY.value,
+        [525, 530],
+        [colors.gray100, colors.gray800 ]
+      ),
+    }
+  })
+ 
   const getFlatListOffset = (selectedIndex: number) => {
     let offset = 0;
 
@@ -56,65 +92,57 @@ export const Home = () => {
 
   return (
     <VStack bgColor='$gray900'>
+      <CoffeeBackgroundLayer />
       <VStack>
-        <HomeHeader />
-        <FlatList 
+        <Animated.View 
+          entering={FadeIn.delay(1000)} 
+          style={homeHeaderContainerStyles}
+        >
+          <HomeHeader scrollY={scrollY}/>
+        </Animated.View>
+        <Animated.FlatList 
           ref={flatListRef}
           stickyHeaderIndices={[1]}
+          onScroll={scrollHandler}
           data={["0", "1", "2"]}
           renderItem={({index}) => {
             if(index === 0){
               return (
                 <VStack gap='$8' >
-                  <VStack gap='$4' px='$8' pb={137} bgColor='$gray100'>
-                    <Text 
-                      color='$white' 
-                      fontFamily='$heading'
-                      lineHeight='$2xl'
-                      fontSize='$2xl'
-                      >
-                        Encontre o café perfeito para qualquer hora do dia
-                    </Text>
-                    <View position='relative'>
-                      <Image 
-                        source={CoffeeBeans} 
-                        alt='beans'
-                        position='absolute'
-                        right={0}
-                        top={64}
-                     
-                      />
-                      <Input placeholder='Pesquisar' />
-                    </View>
-                  </VStack>
-               
-                  <Animated.FlatList 
-                    horizontal
-                    entering={SlideInRight.duration(ONE_SECOND_IN_MILISECONDS)}
-                    data={COFFEES_HIGHTLIGHT}
-                    showsHorizontalScrollIndicator={false}
-                    style={{ marginTop: -128 }}
-                    contentContainerStyle={{
-                      gap: 12,
-                      marginLeft: 0,
-                      paddingHorizontal: 32,
-                      paddingRight: 36, 
-                      paddingTop: 48,
-                      alignItems: "center",
-                    }}
-                    renderItem={({item}) => (
-                      <Animated.View entering={ZoomIn.duration(ONE_SECOND_IN_MILISECONDS)}>
-                        <CoffeeHighlightCard data={item} />
-                      </Animated.View>
-                    )} 
-                  />
+                  <Animated.View entering={FadeIn.delay(1000)}>
+                    <VStack gap='$4' px='$8'>
+                      <Text 
+                        color='$white' 
+                        fontFamily='$heading'
+                        lineHeight='$2xl'
+                        fontSize='$2xl'
+                        >
+                          Encontre o café perfeito para qualquer hora do dia
+                      </Text>
+                      <View position='relative'>
+                        <Image 
+                          source={CoffeeBeans} 
+                          alt='beans'
+                          position='absolute'
+                          right={0}
+                          top={64}
+                        />
+                        <Input placeholder='Pesquisar' />
+                      </View>
+                    </VStack>
+                  </Animated.View>
+                  <CoffeeHighlightsList />
                 </VStack>
               )
             } 
 
             if(index === 1){
               return (
-                <Animated.View entering={SlideInDown.duration(ONE_SECOND_IN_MILISECONDS)}>
+                <Animated.View entering={SlideInDown.duration(ONE_SECOND_IN_MILISECONDS).withCallback((finished) => {
+                  if(finished) {
+                    contentOpacity.value = withTiming(1, {duration: 1000})
+                  }
+                })}>
                   <VStack pl='$8' gap='$2' py='$4' bgColor='$gray900'>
                     <Text fontSize='$xl' color='$gray300' fontFamily='$heading'>Nossos cafés</Text>
                     <HStack 
@@ -159,7 +187,9 @@ export const Home = () => {
                       </Text>
                     )}
                     renderItem={({item}) => (
-                      <CoffeeCard data={item} />
+                      <Pressable onPress={() => navigate('details', {id: item.id})}>
+                        <CoffeeCard data={item} />
+                      </Pressable>
                     )}
                   />
                 </Animated.View>
