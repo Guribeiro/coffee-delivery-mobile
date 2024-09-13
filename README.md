@@ -45,6 +45,7 @@ The following tools were used in this project:
 - [React](https://pt-br.reactjs.org/)
 - [React Native](https://reactnative.dev/)
 - [TypeScript](https://www.typescriptlang.org/)
+- [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/)
 
 ## ☑️ Requirements ##
 
