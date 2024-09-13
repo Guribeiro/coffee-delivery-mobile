@@ -1,5 +1,5 @@
 import { useRef } from "react"
-import { Alert, FlatList, Dimensions } from "react-native"
+import { Alert, FlatList } from "react-native"
 import { 
   HStack, 
   View, 
@@ -21,8 +21,8 @@ import {Swipeable} from 'react-native-gesture-handler'
 
 import { AppNavigatorRouteProps } from "@routes/app.routes"
 import { config } from "@config/gluestack-ui.config"
-import { useCart } from "@hooks/useCart"
 
+import { useCart } from "@hooks/useCart"
 import { CartItem } from "@contexts/cart"
 
 import { CoffeeCartCard } from "@components/coffee-cart-card"
@@ -53,6 +53,8 @@ export const Cart = () => {
 
   const handleSubmitOrder = () => {
     if(cart.length < 1) return
+
+    // awai
 
     navigate('orderSuccessFeedback')
   }

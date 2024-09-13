@@ -1,16 +1,34 @@
 import { VStack, Text } from '@gluestack-ui/themed'
-import Animated, { FadeInLeft, FadeInRight, SlideInDown, SlideInLeft, SlideInUp } from 'react-native-reanimated'
+import Animated, { FadeInLeft, FadeInRight } from 'react-native-reanimated'
+import { Audio } from "expo-av"
+import * as Heptics from 'expo-haptics'
 
 import OrderHeroSvg from '@assets/orderhero.svg'
+import SuccessAudioMp3 from '@assets/success.mp3'
+
 import { Button } from '@gluestack-ui/themed'
 import { BackHandler } from 'react-native'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 
 import { AppNavigatorRouteProps } from '@routes/app.routes'
 
 export const OrderSuccessFeedback = () => {
   const {navigate} = useNavigation<AppNavigatorRouteProps>()
+
+  async function playSound() {
+    await Heptics.notificationAsync(Heptics.NotificationFeedbackType.Success)
+    const {sound, status} = await Audio.Sound.createAsync(SuccessAudioMp3, {shouldPlay: true})
+    
+    if(status.isLoaded) {
+      await sound.setPositionAsync(0)
+      await sound.playAsync()
+    }
+  }
+
+  useEffect(() => {
+    playSound()
+  },[])
   
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
